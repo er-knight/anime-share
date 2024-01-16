@@ -4,4 +4,4 @@ services:
   anime-share:
     build: .
     ports:
-      - "8080:80"
+      - "8000:8000"

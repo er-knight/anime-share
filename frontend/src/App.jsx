@@ -22,7 +22,7 @@ function copyShareableURL(text) {
       ).then(
         response => (
           navigator && navigator.clipboard && navigator.clipboard.writeText
-        ) ? navigator.clipboard.writeText(`http://localhost:5173/${response.slice(1, response.length - 1)}`) : null
+        ) ? navigator.clipboard.writeText(`http://localhost:8000/${response.slice(1, response.length - 1)}`) : null
       )
     })
 }

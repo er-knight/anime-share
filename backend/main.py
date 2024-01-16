@@ -1,5 +1,8 @@
-from fastapi import Depends, FastAPI, Request
+import pathlib
+
+from fastapi import Depends, FastAPI, Request, Response, Path
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import HTMLResponse
 from sqlalchemy.orm import Session
 
 import crud
@@ -49,3 +52,31 @@ async def get_shareable_url(request: Request):
     localdb[hash] = payload
     print(hash)
     return hash
+
+@app.get("/")
+def index():
+    with (pathlib.Path(__file__).parent.parent / "frontend" / "dist" / "index.html").open("r") as f:
+        html_content = f.read()
+    
+    return HTMLResponse(content=html_content, status_code=200)
+
+@app.get("/{_}")
+def index(_: str):
+    with (pathlib.Path(__file__).parent.parent / "frontend" / "dist" / "index.html").open("r") as f:
+        html_content = f.read()
+    
+    return HTMLResponse(content=html_content, status_code=200)
+
+@app.get("/assets/{file_name}")
+def index(file_name: str):
+    content_type = ''
+    if file_name.endswith('.js'):
+        content_type = 'text/javascript; charset=utf-8'
+    elif file_name.endswith('.css'):
+        content_type = 'text/css; charset=utf-8'
+    headers = {'Content-Type': content_type}
+
+    with (pathlib.Path(__file__).parent.parent / "frontend" / "dist" / "assets" / file_name).open("r") as f:
+        file_content = f.read()
+    
+    return Response(content=file_content, status_code=200, headers=headers)

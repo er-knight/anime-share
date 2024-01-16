@@ -1,15 +1,3 @@
-# FROM python:3.10-slim-bookworm as backend
-
-# WORKDIR /app/backend
-
-# COPY backend/requirements.txt .
-
-# RUN pip install --no-cache-dir -r requirements.txt
-
-# COPY backend .
-
-# EXPOSE 8000
-
 FROM node:18-bookworm-slim as frontend
 
 WORKDIR /app/frontend
@@ -23,12 +11,18 @@ COPY frontend .
 
 RUN npm run build
 
-FROM nginx:1.25-bookworm
+FROM python:3.10-slim-bookworm as backend
 
-COPY --from=frontend /app/frontend/dist /usr/share/nginx/html
+WORKDIR /app/backend
 
-COPY nginx/conf.d/default.conf /etc/nginx/conf.d/default.conf
+COPY backend/requirements.txt .
 
-EXPOSE 80
+RUN pip install --no-cache-dir -r requirements.txt
 
-CMD ["nginx", "-g", "daemon off;"]
+COPY backend .
+
+COPY --from=frontend /app/frontend/dist /app/frontend/dist
+
+EXPOSE 8000
+
+CMD [ "uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000" ]
