@@ -2,8 +2,10 @@ import { useEffect, useState, useRef } from "react"
 import { useParams } from "react-router-dom"
 
 
+const baseUrl = "https://animeshare.onrender.com"
+
 async function compress(data) {
-  const compressionStream = new CompressionStream('gzip')
+  const compressionStream = new CompressionStream("gzip")
   const writer = compressionStream.writable.getWriter()
   writer.write(data)
   writer.close()
@@ -14,7 +16,7 @@ function copyShareableURL(text) {
   const encodedText = new TextEncoder().encode(text)
   compress(encodedText).then(
     (compressedText) => {
-      fetch("http://localhost:8000/url", {
+      fetch(`${baseUrl}/url`, {
         method: 'POST',
         body: compressedText
       }).then(
@@ -22,7 +24,7 @@ function copyShareableURL(text) {
       ).then(
         response => (
           navigator && navigator.clipboard && navigator.clipboard.writeText
-        ) ? navigator.clipboard.writeText(`http://localhost:8000/${response.slice(1, response.length - 1)}`) : null
+        ) ? navigator.clipboard.writeText(`${baseUrl}/${response.slice(1, response.length - 1)}`) : null
       )
     })
 }
@@ -55,7 +57,7 @@ function App() {
   const selected = useRef([])
 
   const selectedNoneHash = "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
-  const url = new URL("http://localhost:8000/anime")
+  const url = new URL(`${baseUrl}/anime`)
 
   useEffect(() => {
     if (data.length === 0) {
@@ -115,7 +117,7 @@ function App() {
         }, 3000)
       }
     }
-  };
+  }
 
   return (
     <>
