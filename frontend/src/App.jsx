@@ -1,9 +1,6 @@
 import { useEffect, useState, useRef } from "react"
 import { useParams } from "react-router-dom"
 
-
-const baseUrl = "https://animeshare.onrender.com"
-
 async function compress(data) {
   const compressionStream = new CompressionStream("gzip")
   const writer = compressionStream.writable.getWriter()
@@ -16,7 +13,7 @@ function copyShareableURL(text) {
   const encodedText = new TextEncoder().encode(text)
   compress(encodedText).then(
     (compressedText) => {
-      fetch(`${baseUrl}/url`, {
+      fetch(`${import.meta.env.VITE_API_URL}/url`, {
         method: 'POST',
         body: compressedText
       }).then(
@@ -24,12 +21,14 @@ function copyShareableURL(text) {
       ).then(
         response => (
           navigator && navigator.clipboard && navigator.clipboard.writeText
-        ) ? navigator.clipboard.writeText(`${baseUrl}/${response.slice(1, response.length - 1)}`) : null
+        ) ? navigator.clipboard.writeText(
+          `${import.meta.env.VITE_BASE_URL}/${response.slice(1, response.length - 1)}`
+        ) : null
       )
     })
 }
 
-function Card({ id, title, selected }) {
+function Card({ id, title, type, episodes, image_url, airing_period, rank, rating, selected }) {
   const [isSelected, setIsSelected] = useState(selected.current.includes(id))
   return (
     <div
@@ -39,12 +38,27 @@ function Card({ id, title, selected }) {
           ? selected.current.filter(value => value != id)
           : [...selected.current, id]
       }}
-      className={
-        `h-64 md:h-80 p-1 min-[425px]:h-[22rem] border ${isSelected ? 'bg-green-600' : ''} hover:border-slate-600`
-      }
+      className="relative border hover:border-slate-600"
     >
-      {/* {`Card #${id.toString().padStart(3, '0')}`} */}
-      {`#${id} - ${title}`}
+      <img src={image_url} className="h-full w-full object-cover"></img>
+      <div className={
+        `flex flex-col justify-end p-1 absolute top-0 bottom-0 left-0 right-0 ${
+          isSelected
+            ? 'bg-gradient-to-b from-green-100/10 via-green-300/30 to-green-500'
+            : 'bg-gradient-to-b from-blue-100/10 via-blue-300/30 to-blue-500'
+        }`
+      }>
+        <div className="flex justify-between">
+          <span className="font-bold text-xl">{`#${rank}`}</span>
+          <span className="font-bold text-xl">{rating}</span>
+        </div>
+        <div className="flex justify-between">
+          <span className="font-bold text-nowrap overflow-hidden text-ellipsis">{type}</span>
+          <span className="font-bold text-nowrap overflow-hidden text-ellipsis">{type != 'Movie' ? `EP ${episodes}` : ''}</span>
+        </div>
+        <span className="font-bold text-nowrap overflow-hidden text-ellipsis">{airing_period}</span>
+        <span className="font-bold text-nowrap overflow-hidden text-ellipsis">{title}</span>
+      </div>
     </div>
   )
 }
@@ -57,7 +71,7 @@ function App() {
   const selected = useRef([])
 
   const selectedNoneHash = "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
-  const url = new URL(`${baseUrl}/anime`)
+  const url = new URL(`${import.meta.env.VITE_API_URL}/anime`)
 
   useEffect(() => {
     if (data.length === 0) {
@@ -92,7 +106,6 @@ function App() {
   window.onscroll = function () {
     if ((window.innerHeight + window.scrollY) >= document.body.offsetHeight) {
       if (data.length < 1000) {
-        // setData([...data, ...Array.from({ length: Math.max(10, 100 - data.length) }, (_, index) => data.length + index + 1)])
         url.search = new URLSearchParams(
           hash != undefined && hash != selectedNoneHash
             ? { hash: hash, offset: data.length, limit: Math.max(10, 100 - data.length) }  
@@ -123,7 +136,7 @@ function App() {
     <>
       <button type="button"
         onClick={() => copyShareableURL(selected.current.sort((a, b) => a - b).map(value => value.toString()).join(" "))}
-        className="font-['Atkinson_Hyperlegible'] inline-flex items-center gap-1 fixed top-2 right-2 text-2xl bg-orange-400 pl-2 pr-2 hover:border hover:border-slate-600"
+        className="font-['Atkinson_Hyperlegible'] z-10 inline-flex items-center gap-1 fixed top-2 right-2 text-2xl bg-orange-400 pl-2 pr-2 hover:border hover:border-slate-600"
       >
         share
         <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24">
@@ -133,8 +146,19 @@ function App() {
       <div
         className="font-['Atkinson_Hyperlegible'] grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-7  gap-1 p-1"
       >
-        {/* {data.map(value => <Card key={value} id={value}></Card>)} */}
-        {data.map(value => <Card key={value.id} id={value.id} title={value.title} selected={selected}></Card>)}
+        {
+          data.map(value => <Card 
+            key={value.id} 
+            id={value.id} 
+            title={value.title} 
+            type={value.type}
+            episodes={value.episodes}
+            image_url={value.image_url} 
+            airing_period={value.airing_period}
+            rank={value.rank}
+            rating={value.rating}
+            selected={selected}
+          ></Card>)}
       </div>
       <span
         className={

@@ -7,9 +7,9 @@ class AnimeBase(BaseModel):
     type: str
     episodes: int
     status: str
-    season: str
+    airing_period: str
     image_url: str
-    ranking: int
+    rank: int
     rating: float
 
 class Anime(AnimeBase):
@@ -18,9 +18,9 @@ class Anime(AnimeBase):
     type: str
     episodes: int
     status: str
-    season: str
+    airing_period: str
     image_url: str
-    ranking: int
+    rank: int
     rating: float
     
     class Config:
