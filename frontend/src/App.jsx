@@ -38,7 +38,7 @@ function Card({ id, title, type, episodes, image_url, airing_period, rank, ratin
           ? selected.current.filter(value => value != id)
           : [...selected.current, id]
       }}
-      className="relative border hover:border-slate-600"
+      className="relative border hover:border-slate-600 h-[calc(100vh/2)]"
     >
       <img src={image_url} className="h-full w-full object-cover"></img>
       <div className={
@@ -54,7 +54,7 @@ function Card({ id, title, type, episodes, image_url, airing_period, rank, ratin
         </div>
         <div className="flex justify-between">
           <span className="font-bold text-nowrap overflow-hidden text-ellipsis">{type}</span>
-          <span className="font-bold text-nowrap overflow-hidden text-ellipsis">{type != 'Movie' ? `EP ${episodes}` : ''}</span>
+          <span className="font-bold text-nowrap overflow-hidden text-ellipsis">{type != 'Movie' ? `${episodes} Episode${episodes > 1 ? "s": ""}` : ''}</span>
         </div>
         <span className="font-bold text-nowrap overflow-hidden text-ellipsis">{airing_period}</span>
         <span className="font-bold text-nowrap overflow-hidden text-ellipsis">{title}</span>
@@ -143,8 +143,7 @@ function App() {
           <path d="M7 7h8.586L5.293 17.293l1.414 1.414L17 8.414V17h2V5H7v2z" />
         </svg>
       </button>
-      <div
-        className="font-['Atkinson_Hyperlegible'] grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-7  gap-1 p-1"
+      <div className="font-['Atkinson_Hyperlegible'] grid md:grid-cols-[repeat(auto-fill,minmax(calc(100vh/3.5),1fr))] grid-cols-[repeat(auto-fill,minmax(calc(100vh/4),1fr))] gap-1 p-1 "
       >
         {
           data.map(value => <Card 
