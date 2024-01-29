@@ -1,0 +1,13 @@
+name: ping every 10 minutes
+
+on:
+  schedule:
+    - cron: '*/10 * * * *' # run every 10 minutes
+
+jobs:
+  ping-website:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: ping
+        run: curl https://animeshare.onrender.com
