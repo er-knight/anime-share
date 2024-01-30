@@ -13,13 +13,13 @@ def create_table():
                 cursor.execute(
                 """
                 CREATE TABLE IF NOT EXISTS mapping (
-                    id SERIAL PRIMARY KEY,
-                    hash varchar(64)
-                    zip text
+                    id serial PRIMARY KEY,
+                    hash varchar(64),
+                    zip bytea
                 )
                 """
                 )
-        connection.commit()
+                connection.commit()
     except Exception as e:
         print("[create_table]", e)           
 
@@ -35,7 +35,7 @@ def insert_mapping(hash: str, zip: str) -> bool:
                 """, (hash, zip)
                 )
                 
-            connection.commit()
+                connection.commit()
         return True
     except Exception as e:
         print("[insert_mapping]", e)
@@ -48,11 +48,12 @@ def get_zip_from_hash(hash: str) -> str:
             with connection.cursor() as cursor:
                 cursor.execute(
                 """
-                SELECT zip from mapping
+                SELECT zip FROM mapping
                 WHERE hash = %s
                 """, (hash, )
                 )
-        return cursor.fetchone()[0]
+                result = cursor.fetchone()
+                return result[0] if result else None
     except Exception as e:
         print("[get_zip_from_hash]", e)
         return None
