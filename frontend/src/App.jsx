@@ -9,25 +9,6 @@ async function compress(data) {
   return new Response(compressionStream.readable).arrayBuffer()
 }
 
-function copyShareableURL(text) {
-  const encodedText = new TextEncoder().encode(text)
-  compress(encodedText).then(
-    (compressedText) => {
-      fetch(`${import.meta.env.VITE_API_URL}/url`, {
-        method: 'POST',
-        body: compressedText
-      }).then(
-        response => response.text()
-      ).then(
-        response => (
-          navigator && navigator.clipboard && navigator.clipboard.writeText
-        ) ? navigator.clipboard.writeText(
-          `${import.meta.env.VITE_BASE_URL}/${response.slice(1, response.length - 1)}`
-        ) : null
-      )
-    })
-}
-
 function Card({ id, title, type, episodes, image_url, airing_period, rank, rating, selected }) {
   const [isSelected, setIsSelected] = useState(selected.current.includes(id))
   return (
@@ -38,7 +19,7 @@ function Card({ id, title, type, episodes, image_url, airing_period, rank, ratin
           ? selected.current.filter(value => value != id)
           : [...selected.current, id]
       }}
-      className="relative border hover:border-slate-600 h-[calc(100vh/2)]"
+      className="relative text-slate-950 border border-slate-950 min-h-[240px] h-[calc((100vw/160px)*1.5px)] hover:cursor-pointer"
     >
       <img src={image_url} className="h-full w-full object-cover"></img>
       <div className={
@@ -49,15 +30,15 @@ function Card({ id, title, type, episodes, image_url, airing_period, rank, ratin
         }`
       }>
         <div className="flex justify-between">
-          <span className="font-bold text-xl">{`#${rank}`}</span>
-          <span className="font-bold text-xl">{rating}</span>
+          <span className="font-bold tracking-tight text-xl">{`#${rank}`}</span>
+          <span className="font-bold tracking-tight text-xl">{rating}</span>
         </div>
         <div className="flex justify-between">
-          <span className="font-bold text-nowrap overflow-hidden text-ellipsis">{type}</span>
-          <span className="font-bold text-nowrap overflow-hidden text-ellipsis">{type != 'Movie' ? `${episodes} Episode${episodes > 1 ? "s": ""}` : ''}</span>
+          <span className="font-bold tracking-tight text-nowrap overflow-hidden text-ellipsis">{type}</span>
+          <span className="font-bold tracking-tight text-nowrap overflow-hidden text-ellipsis">{type != 'Movie' ? `${episodes} Episode${episodes > 1 ? "s": ""}` : ''}</span>
         </div>
-        <span className="font-bold text-nowrap overflow-hidden text-ellipsis">{airing_period}</span>
-        <span className="font-bold text-nowrap overflow-hidden text-ellipsis">{title}</span>
+        <span className="font-bold tracking-tight text-nowrap overflow-hidden text-ellipsis">{airing_period}</span>
+        <span className="font-bold tracking-tight text-nowrap overflow-hidden text-ellipsis">{title}</span>
       </div>
     </div>
   )
@@ -68,6 +49,9 @@ function App() {
   const { hash } = useParams()
   const [data, setData] = useState([])
   const [message, setMessage] = useState("")
+  const [showModal, setShowModal] = useState(false)
+  const [shareableURL, setShareableURL] = useState("")
+
   const selected = useRef([])
 
   const selectedNoneHash = "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
@@ -75,7 +59,6 @@ function App() {
 
   useEffect(() => {
     if (data.length === 0) {
-      // setData([...data, ...Array.from({ length: 20 }, (_, index) => data.length + index + 1)])
       url.search = new URLSearchParams(
         hash != undefined && hash != selectedNoneHash
           ? { hash: hash, offset: 0, limit: 20 }  
@@ -101,6 +84,23 @@ function App() {
     }
 
   }, [])
+
+  function getShareableURL(text) {
+    const encodedText = new TextEncoder().encode(text)
+    compress(encodedText).then(
+      (compressedText) => {
+        fetch(`${import.meta.env.VITE_API_URL}/url`, {
+          method: 'POST',
+          body: compressedText
+        }).then(
+          response => response.text()
+        ).then(
+          response => setShareableURL(
+            `${import.meta.env.VITE_BASE_URL}/${response.slice(1, response.length - 1)}`
+          )
+        )
+      })
+  }
 
   // https://blog.logrocket.com/guide-pagination-load-more-buttons-infinite-scroll
   window.onscroll = function () {
@@ -134,16 +134,28 @@ function App() {
 
   return (
     <>
-      <button type="button"
-        onClick={() => copyShareableURL(selected.current.sort((a, b) => a - b).map(value => value.toString()).join(" "))}
-        className="font-['Atkinson_Hyperlegible'] z-10 inline-flex items-center gap-1 fixed top-2 right-2 text-2xl bg-orange-400 pl-2 pr-2 hover:border hover:border-slate-600"
-      >
-        share
-        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24">
-          <path d="M7 7h8.586L5.293 17.293l1.414 1.414L17 8.414V17h2V5H7v2z" />
-        </svg>
-      </button>
-      <div className="font-['Atkinson_Hyperlegible'] grid md:grid-cols-[repeat(auto-fill,minmax(calc(100vh/3.5),1fr))] grid-cols-[repeat(auto-fill,minmax(calc(100vh/4),1fr))] gap-1 p-1 "
+      <div className="font-['Atkinson_Hyperlegible'] fixed bottom-2 left-2 right-2 z-10 flex flex-col items-center justify-center gap-2">
+        <div className={`${showModal ? "w-full max-w-[320px] bg-slate-50 border-2 border-slate-950 flex flex-col items-center justify-center gap-2 p-2": "hidden"}`}>
+          <a href="https://github.com/er-knight/animeshare" target="_blank" className="text-2xl tracking-tighter decoration-slate-300 hover:underline hover:decoration-slate-950 text-slate-950">animeshare</a>
+          <div className="w-full flex gap-2">
+            <input className="border-2 border-slate-950 px-2 tracking-tight grow" readOnly={true} value={shareableURL}></input>
+            <button className="border-2 border-slate-950 px-2 tracking-tight" onClick={() => navigator.clipboard.writeText(shareableURL)}>copy</button>
+          </div>
+        </div>
+        <button type="button"
+          onClick={() => {
+            getShareableURL(selected.current.sort((a, b) => a - b).map(value => value.toString()).join(" "))
+            setShowModal(!showModal)
+          }} 
+          className="inline-flex items-center px-2 gap-1 text-2xl tracking-tight bg-slate-50 border-2 border-slate-950"
+        >
+          share
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24">
+            <path d="M7 7h8.586L5.293 17.293l1.414 1.414L17 8.414V17h2V5H7v2z" />
+          </svg>
+        </button>
+      </div>
+      <div className="font-['Atkinson_Hyperlegible'] grid grid-cols-[repeat(auto-fill,minmax(160px,1fr))]"
       >
         {
           data.map(value => <Card 

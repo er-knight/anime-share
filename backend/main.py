@@ -11,9 +11,11 @@ import schemas
 
 from utils import get_ids, get_url
 from database import SessionLocal, engine
+from dbutils import create_table, insert_mapping, get_zip_from_hash
 
 
 models.Base.metadata.create_all(bind=engine)
+create_table()
 
 app = FastAPI()
 
@@ -38,7 +40,8 @@ localdb = {}
 
 @app.get("/anime", response_model=list[schemas.Anime])
 def get_animes(hash: str = '', offset: int = 0, limit: int = 100, db: Session = Depends(get_db)) -> list[schemas.Anime]:
-    ids = get_ids(localdb[hash]) if hash else []
+    zip = get_zip_from_hash(hash)
+    ids = get_ids(zip) if zip else []
     animes = crud.get_animes(db, offset=offset, limit=limit, ids=ids)
     return animes
 
@@ -46,9 +49,7 @@ def get_animes(hash: str = '', offset: int = 0, limit: int = 100, db: Session = 
 async def get_shareable_url(request: Request):
     payload = await request.body()
     hash = get_url(payload)
-    # TODO: insert hash, gzip to db
-    localdb[hash] = payload
-    print(hash)
+    insert_mapping(hash, payload)
     return hash
 
 @app.get("/")
