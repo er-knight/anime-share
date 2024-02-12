@@ -51,23 +51,28 @@ function App() {
   const [message, setMessage] = useState("")
   const [showModal, setShowModal] = useState(false)
   const [shareableURL, setShareableURL] = useState("")
-
+  
+  const dataOver = useRef(false)
   const selected = useRef([])
 
   const selectedNoneHash = "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
   const url = new URL(`${import.meta.env.VITE_API_URL}/anime`)
 
   useEffect(() => {
-    if (data.length === 0) {
-      url.search = new URLSearchParams(
-        hash != undefined && hash != selectedNoneHash
-          ? { hash: hash, offset: 0, limit: 20 }  
-          : { offset: 0, limit: 20 }
-      )
+    url.search = new URLSearchParams(
+      hash != undefined && hash != selectedNoneHash
+        ? { hash: hash, offset: 0, limit: 50 }  
+        : { offset: 0, limit: 50 }
+    )
+    if (!dataOver.current) {
       fetch(url).then(
         response => response.json()
       ).then(
         response => {
+          if (response.length == 0) {
+            dataOver.current = true
+            return
+          }
           setData([...data, ...response])
           if (hash != undefined && hash != selectedNoneHash) {
             selected.current = [...selected.current, ...response.map(value => value.id)]
@@ -105,16 +110,20 @@ function App() {
   // https://blog.logrocket.com/guide-pagination-load-more-buttons-infinite-scroll
   window.onscroll = function () {
     if ((window.innerHeight + window.scrollY) >= document.body.offsetHeight) {
-      if (data.length < 1000) {
-        url.search = new URLSearchParams(
-          hash != undefined && hash != selectedNoneHash
-            ? { hash: hash, offset: data.length, limit: Math.max(10, 100 - data.length) }  
-            : { offset: data.length, limit: Math.max(10, 100 - data.length) }
-        )
+      url.search = new URLSearchParams(
+        hash != undefined && hash != selectedNoneHash
+          ? { hash: hash, offset: data.length, limit: 50 }  
+          : { offset: data.length, limit: 50 }
+      )
+      if (!dataOver.current) {
         fetch(url).then(
           response => response.json()
         ).then(
           response => {
+            if (response.length == 0) {
+              dataOver.current = true
+              return
+            }  
             setData([...data, ...response])
             if (hash != undefined && hash != selectedNoneHash) {
               selected.current = [...selected.current, ...response.map(value => value.id)]
@@ -133,7 +142,12 @@ function App() {
   }
 
   return (
-    <>
+    <>  
+      <span
+        className={
+          `font-['Atkinson_Hyperlegible'] fixed w-full z-20 text-center text-xl top-2 ${message !== '' ? 'animate-fade' : ''}`
+        }
+      >{message}</span>
       <div className="font-['Atkinson_Hyperlegible'] fixed bottom-2 left-2 right-2 z-10 flex flex-col items-center justify-center gap-2">
         <div className={`${showModal ? "w-full max-w-[320px] bg-slate-50 border-2 border-slate-950 flex flex-col items-center justify-center gap-2 p-2": "hidden"}`}>
           <a href="https://github.com/er-knight/animeshare" target="_blank" className="text-2xl tracking-tighter decoration-slate-300 hover:underline hover:decoration-slate-950 text-slate-950">animeshare</a>
@@ -144,6 +158,7 @@ function App() {
         </div>
         <button type="button"
           onClick={() => {
+            console.log(selected)
             getShareableURL(selected.current.sort((a, b) => a - b).map(value => value.toString()).join(" "))
             setShowModal(!showModal)
           }} 
@@ -171,11 +186,6 @@ function App() {
             selected={selected}
           ></Card>)}
       </div>
-      <span
-        className={
-          `font-['Atkinson_Hyperlegible'] fixed w-full text-center text-xl bottom-1 ${message !== '' ? 'animate-fade' : ''}`
-        }
-      >{message}</span>
     </>
   )
 }

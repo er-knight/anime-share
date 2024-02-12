@@ -14,7 +14,7 @@ def create_table():
                 """
                 CREATE TABLE IF NOT EXISTS mapping (
                     id serial PRIMARY KEY,
-                    hash varchar(64),
+                    hash varchar(64) UNIQUE,
                     zip bytea
                 )
                 """
@@ -32,6 +32,7 @@ def insert_mapping(hash: str, zip: str) -> bool:
                 """
                 INSERT INTO mapping (hash, zip)
                 VALUES (%s, %s)
+                ON CONFLICT (hash) DO NOTHING
                 """, (hash, zip)
                 )
                 
