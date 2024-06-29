@@ -39,7 +39,11 @@ def get_db():
 localdb = {}
 
 @app.get("/anime", response_model=list[schemas.Anime])
-def get_animes(hash: str = '', offset: int = 0, limit: int = 100, db: Session = Depends(get_db)) -> list[schemas.Anime]:
+def get_animes(hash: str = '', offset: int = 0, limit: int = 100, keyword: str = '', db: Session = Depends(get_db)) -> list[schemas.Anime]:
+    if keyword:    
+        animes = crud.get_animes(db, keyword=keyword)
+        return animes
+
     zip = get_zip_from_hash(hash)
     ids = get_ids(zip) if zip else []
     animes = crud.get_animes(db, offset=offset, limit=limit, ids=ids)
